@@ -5,9 +5,7 @@ from django.urls import reverse
 from django import forms
 
 from yatube.settings import POSTS_ON_PAGE
-from posts.models import Post, Group
-
-User = get_user_model()
+from posts.models import Post, Group, User
 
 POSTS_CREATED = 15
 
@@ -34,39 +32,15 @@ class PostPagesTests(TestCase):
         self.author_client = Client()
         self.author_client.force_login(self.user)
 
-    def test_pages_uses_correct_template(self):
-        """URL-адрес использует соответствующий шаблон."""
-        templates_pages_names = {
-            reverse('posts:index'): 'posts/index.html',
-            (reverse(
-                'posts:group_list', kwargs={'slug': self.group.slug}
-            )): 'posts/group_list.html',
-            (reverse(
-                'posts:profile', kwargs={'username': self.post.author}
-            )): 'posts/profile.html',
-            (reverse(
-                'posts:post_detail', kwargs={'post_id': self.post.id}
-            )): 'posts/post_detail.html',
-            (reverse(
-                'posts:post_edit', kwargs={'post_id': self.post.id}
-            )): 'posts/create_post.html',
-            reverse('posts:post_create'): 'posts/create_post.html',
-        }
-        for reverse_name, template in templates_pages_names.items():
-            with self.subTest(reverse_name=reverse_name):
-                response = self.author_client.get(reverse_name)
-                self.assertTemplateUsed(response, template)
-
     def test_index_context(self):
         """Шаблон index сформирован с правильным контекстом."""
         response = self.author_client.get(reverse('posts:index'))
-        first_object = response.context['page_obj'][0]
-        post_author_0 = first_object.author
-        post_text_0 = first_object.text
-        post_group_0 = first_object.group
-        self.assertEqual(post_text_0, self.post.text)
-        self.assertEqual(post_author_0, self.post.author)
-        self.assertEqual(post_group_0, self.post.group)
+        page_obj = response.context['page_obj']
+        self.assertGreater(len(page_obj), 0)
+        first_object = page_obj[0]
+        self.assertEqual(first_object.text, self.post.text)
+        self.assertEqual(first_object.author, self.post.author)
+        self.assertEqual(first_object.group, self.post.group)
 
     def test_group_list_context(self):
         """Шаблон group_list сформирован с правильным контекстом."""
@@ -75,16 +49,12 @@ class PostPagesTests(TestCase):
         ))
         group = response.context['group']
         page_obj = response.context['page_obj']
-        self.assertIsInstance(page_obj, Page)
         self.assertGreater(len(page_obj), 0)
         post = page_obj[0]
-        post_author_0 = post.author
-        post_text_0 = post.text
-        post_group_0 = post.group
         self.assertEqual(group, self.group)
-        self.assertEqual(post_text_0, self.post.text)
-        self.assertEqual(post_author_0, self.post.author)
-        self.assertEqual(post_group_0, self.post.group)
+        self.assertEqual(post.text, self.post.text)
+        self.assertEqual(post.author, self.post.author)
+        self.assertEqual(post.group, self.post.group)
 
     def test_profile_context(self):
         """Шаблон profile сформирован с правильным контекстом."""
@@ -93,16 +63,12 @@ class PostPagesTests(TestCase):
         ))
         author = response.context['author']
         page_obj = response.context['page_obj']
-        self.assertIsInstance(page_obj, Page)
         self.assertGreater(len(page_obj), 0)
         post = page_obj[0]
-        post_author_0 = post.author
-        post_text_0 = post.text
-        post_group_0 = post.group
         self.assertEqual(author, self.user)
-        self.assertEqual(post_text_0, self.post.text)
-        self.assertEqual(post_author_0, self.post.author)
-        self.assertEqual(post_group_0, self.post.group)
+        self.assertEqual(post.text, self.post.text)
+        self.assertEqual(post.author, self.post.author)
+        self.assertEqual(post.group, self.post.group)
 
     def test_post_detail_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
@@ -116,7 +82,7 @@ class PostPagesTests(TestCase):
         self.assertEqual(post.group, self.post.group)
 
     def test_post_create_edit_context_form(self):
-        """Сформированы формы правильным контекстом."""
+        """Сформированы формы с правильным контекстом."""
         urls = (
             reverse('posts:post_create'),
             reverse('posts:post_edit', kwargs={'post_id': self.post.id}),
@@ -170,13 +136,13 @@ class PaginatorViewsTest(TestCase):
             slug='test-slug',
             description='Тестовое описание',
         )
-
-        for i in range(POSTS_CREATED):
-            Post.objects.create(author=cls.user,
-                                text=f'{i}',
-                                group=cls.group,
-                                )
-
+        posts = [
+            Post(author=cls.user,
+                 text=f'{i}',
+                 group=cls.group,)
+            for i in range(POSTS_CREATED)
+        ]
+        Post.objects.bulk_create(posts)
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)

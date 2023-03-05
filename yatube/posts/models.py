@@ -17,12 +17,14 @@ class Post(models.Model):
     text = models.TextField(verbose_name='Пост',
                             help_text='Текст нового поста', max_length=100)
     pub_date = models.DateTimeField(auto_now_add=True,
-                                    verbose_name='Дата публикации')
+                                    verbose_name='Дата публикации',
+                                    help_text='Здесь действующая дата')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='posts',
         verbose_name='Автор',
+        help_text='Создатель поста',
     )
     group = models.ForeignKey(
         Group,
