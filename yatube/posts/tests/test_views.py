@@ -1,5 +1,3 @@
-from django.contrib.auth import get_user_model
-from django.core.paginator import Page
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
@@ -143,6 +141,7 @@ class PaginatorViewsTest(TestCase):
             for i in range(POSTS_CREATED)
         ]
         Post.objects.bulk_create(posts)
+
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)

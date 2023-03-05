@@ -1,4 +1,3 @@
-from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -81,7 +80,7 @@ class PostCreateFormTests(TestCase):
             'text': 'Текст для редактирования',
             'group': self.group.id,
         }
-        
+
         response = self.authorized_client.post(
             reverse('posts:post_edit', kwargs={'post_id': self.post.id}),
             data=form_data,
